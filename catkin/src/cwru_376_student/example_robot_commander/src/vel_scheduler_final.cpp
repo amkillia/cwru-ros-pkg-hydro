@@ -14,7 +14,7 @@ using namespace std;
 
 bool estop;
 string check;
-
+double savedVelocity;
 
 // set some dynamic limits...
 const double v_max = 5.0; //1m/sec is a slow walk
@@ -36,6 +36,16 @@ ros::Time t_last_callback_;
 double dt_callback_=0.0;
 
 
+void estopCallback(const std_msgs::Bool::ConstPtr& estop) 
+{
+    if (estop->data == true)
+      check = "estop_off";  // means motors are ENABLED
+    else if (estop->data == false)
+      check = "estop_on";  // means motors are DISABLED
+        
+    
+    cout<<check<<endl;
+}
 
 // receive the pose and velocity estimates from the simulator (or the physical robot)
 // copy the relevant values to global variables, for use by "main"
@@ -157,6 +167,7 @@ void odomCallback(const nav_msgs::Odometry& odom_rcvd) {
             ROS_INFO("cmd vel: %f",new_cmd_vel); // debug output
 
             cmd_vel.linear.x = new_cmd_vel;
+            savedVelocity = new_cmd_vel;
             cmd_vel.angular.z = new_cmd_omega; // spin command; always zero, in this example
             if (dist_to_go <= 0.0) { //uh-oh...went too far already!
                 cmd_vel.linear.x = 0.0;  //command vel=0
@@ -265,6 +276,7 @@ void odomCallback(const nav_msgs::Odometry& odom_rcvd) {
 
             cmd_vel.linear.x = 0.0;
             cmd_vel.angular.z = new_cmd_omega ; // spin command; 
+            savedVelocity = new_cmd_omega;
 
             if (dist_to_go >= 0.0) { //uh-oh...went too far already!
                 cmd_vel.angular.z = 0.0;  //command vel=0
@@ -276,15 +288,6 @@ void odomCallback(const nav_msgs::Odometry& odom_rcvd) {
         }
     }
 
-    void estopCallback(const std_msgs::Bool::ConstPtr& estop) 
-    {
-        if (estop->data == true)
-            check = "estop_off";  // means motors are ENABLED
-        else if (estop->data == false)
-            check = "estop_on";  // means motors are DISABLED
-
-        cout<<check<<endl;
-    }
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "vel_scheduler"); // name of this node will be "minimal_publisher1"
