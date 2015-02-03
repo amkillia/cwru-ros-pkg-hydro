@@ -20,7 +20,6 @@ double savedVelocity;
 const double v_max = 5.0; //1m/sec is a slow walk
 const double v_min = 0.1; // if command velocity too low, robot won't move
 const double a_max = 0.1; //1m/sec^2 is 0.1 g's
-//const double a_max_decel = 0.1; // TEST
 const double omega_max = 1.0; //1 rad/sec-> about 6 seconds to rotate 1 full rev
 const double alpha_max = 0.25; //0.5 rad/sec^2-> takes 2 sec to get from rest to full omega
 const double DT = 0.05; // choose an update rate of 20Hz; go faster with actual hardware
@@ -67,7 +66,7 @@ void odomCallback(const nav_msgs::Odometry& odom_rcvd) {
     odom_x_ = odom_rcvd.pose.pose.position.x;
     odom_y_ = odom_rcvd.pose.pose.position.y;
     //odom publishes orientation as a quaternion.  Convert this to a simple heading
-    // see notes above for conversion for simple planar motion
+    //see notes above for conversion for simple planar motion
     double quat_z = odom_rcvd.pose.pose.orientation.z;
     double quat_w = odom_rcvd.pose.pose.orientation.w;
     odom_phi_ = 2.0*atan2(quat_z, quat_w); // cheap conversion from quaternion to heading for planar motion
@@ -165,6 +164,7 @@ void odomCallback(const nav_msgs::Odometry& odom_rcvd) {
                 new_cmd_vel = scheduled_vel; //silly third case: this is already true, if here.  Issue the scheduled velocity
             }
             ROS_INFO("cmd vel: %f",new_cmd_vel); // debug output
+
 
             cmd_vel.linear.x = new_cmd_vel;
             savedVelocity = new_cmd_vel;
@@ -289,7 +289,8 @@ void odomCallback(const nav_msgs::Odometry& odom_rcvd) {
     }
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) 
+{
     ros::init(argc, argv, "vel_scheduler"); // name of this node will be "minimal_publisher1"
     ros::NodeHandle nh; // get a ros nodehandle; standard yadda-yadda
     //create a publisher object that can talk to ROS and issue twist messages on named topic;
@@ -306,18 +307,21 @@ int main(int argc, char **argv) {
     vector<double> pathVector (vv, vv + sizeof(vv) / sizeof(vv[0]) );
 
 
-    for(long index=0; index < (long)pathVector.size(); ++index)
-    {
-        if(index % 2 == 0)
+        for(long index=0; index < (long)pathVector.size(); ++index)
         {
-           linear_motion (pathVector.at(index), vel_cmd_publisher, rtimer); 
-        }
-        else
-        {
-           angular_motion (pathVector.at(index), vel_cmd_publisher, rtimer); 
-        }
-    }
+            if(index % 2 == 0)
+            {
+                linear_motion (pathVector.at(index), vel_cmd_publisher, rtimer); 
+            }
+            else
+            {
+                angular_motion (pathVector.at(index), vel_cmd_publisher, rtimer); 
+            }
+        } 
+
+
     
+  
     ROS_INFO("completed move distance");
 
 }
