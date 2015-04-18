@@ -45,10 +45,11 @@ int main(int argc, char **argv) {
     printf("This is the client program\n");
 
     int sockfd, portno, n;
-
+    char *name = "192.168.20.5";
     struct sockaddr_in serv_addr;
     struct hostent *server;
     char floatArray[MAX_FLOAT_LEN];
+
 
     ROS_INFO("about to create socket");
     //Create socket for client
@@ -57,11 +58,22 @@ int main(int argc, char **argv) {
     ROS_INFO("about to enter first if");
     if (sockfd < 0)
         error("ERROR opening socket");
-    server = gethostbyname("192.168.20.5");
+    server = gethostbyname(name);
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
     }
+
+    //Name the socket as agreed with server
+    memset((char *) &serv_addr,0, sizeof(serv_addr)); //sets bytes in memory
+    serv_addr.sin_family = AF_INET; //select internet protocol
+    bcopy((char *)server->h_addr,
+         (char *)&serv_addr.sin_addr.s_addr,  //address
+         server->h_length);
+    serv_addr.sin_port = htons(portno); //select port number
+
+    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
+        error("ERROR connecting");
 
     ROS_INFO("made it to while loop");
     while (ros::ok()) // do work here in infinite loop (desired for this example), but terminate if detect ROS has faulted (or ctl-C)
@@ -72,20 +84,24 @@ int main(int argc, char **argv) {
         t+=dt;
         ros_float.data = x_des;
         pub.publish(ros_float);
-        ros::Duration(0.1).sleep();
+        
 
+        ROS_INFO("about to read and write");
         //actual like code to read and write
         memset(floatArray, 0, sizeof(floatArray));
         snprintf(floatArray,sizeof(floatArray),"%f",ros_float.data);
-        n = send(sockfd,floatArray,strlen(floatArray), 0);
+        ROS_INFO("floatArray %s", floatArray);
+        n = send(sockfd,floatArray, strlen(floatArray), 0);
         if (n < 0)
              error("ERROR writing to socket");
 
-
-        n = read(sockfd,floatArray,255);
+         ROS_INFO("move sent to controller");
+        /*n = read(sockfd,floatArray,255);
         if (n < 0)
              error("ERROR reading from socket");
-        printf("%s\n",floatArray);
+        printf("%s\n",floatArray);*/
+
+        ros::Duration(0.1).sleep();
 
     }  
     ROS_INFO("completed move distance");
