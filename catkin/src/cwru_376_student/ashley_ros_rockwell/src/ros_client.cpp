@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
     // name of server is it's IP Address
     char *name = "192.168.20.5";
-    struct sockaddr_in serv_addr;
+    struct sockaddr_in serv_addr;  // structure to contain an IP Address
     struct hostent *server;
 
     // creating string ASCII
@@ -65,9 +65,12 @@ int main(int argc, char **argv) {
 
     // Create socket for client
     ROS_INFO("about to create socket");
+
     portno = 10002;  // port number of server
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);  // standard
-    if (sockfd < 0)
+
+    // error displayed if this fails
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);  // standard, define socket file descriptor, always use 0 for last arugment
+    if (sockfd < 0)  // fails if socket call returns -1
         error("ERROR opening socket");
     server = gethostbyname(name);
     if (server == NULL) {
@@ -75,14 +78,17 @@ int main(int argc, char **argv) {
         exit(0);
     }
 
-    // Name the socket as agreed with server
-    memset((char *) &serv_addr,0, sizeof(serv_addr)); // sets bytes in memory
-    serv_addr.sin_family = AF_INET; // select internet protocol
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,  // address
-         server->h_length);
-    serv_addr.sin_port = htons(portno); // select port number
+    // setting fields in serv_addr (address of server)
+    memset((char *) &serv_addr,0, sizeof(serv_addr)); // sets bytes in memory to zero, initializes serv_addr to zeros
+    serv_addr.sin_family = AF_INET; // always set to AF_INET
 
+    // set IP address to serv_addr, use bcopy because server->h_addr is a character string
+    bcopy((char *)server->h_addr,  //h_addr = the first address in the array of network addresses
+         (char *)&serv_addr.sin_addr.s_addr,  
+         server->h_length);
+    serv_addr.sin_port = htons(portno); // set port number of server, converted to network byte order
+
+    // client establish connection to server (socket descriptor, address, size of the address)
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
         error("ERROR connecting");
 
@@ -99,7 +105,7 @@ int main(int argc, char **argv) {
         // read and write
         ROS_INFO("about to read and write");
 
-        // setting bytes in memory for string ASCII
+        // setting bytes in memory for string ASCII to 0
         memset(floatArray, 0, sizeof(floatArray));  
         snprintf(floatArray,sizeof(floatArray),"%f",ros_float.data);
         ROS_INFO("floatArray %s", floatArray);
