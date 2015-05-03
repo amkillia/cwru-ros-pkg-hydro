@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     
     // x = a*sin(omega*t)
     long double omega = 3.14;
-    double a = 1.0;
+    double a = 15.0;
     double t = 0.0;
 
     // incrementing t 
@@ -69,7 +69,8 @@ int main(int argc, char **argv) {
     portno = 10002;  // port number of server
 
     // error displayed if this fails
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);  // standard, define socket file descriptor, always use 0 for last arugment
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);  // standard, define socket file descriptor, 
+                                               //always use 0 for last arugment
     if (sockfd < 0)  // fails if socket call returns -1
         error("ERROR opening socket");
     server = gethostbyname(name);
@@ -79,11 +80,12 @@ int main(int argc, char **argv) {
     }
 
     // setting fields in serv_addr (address of server)
-    memset((char *) &serv_addr,0, sizeof(serv_addr)); // sets bytes in memory to zero, initializes serv_addr to zeros
+    memset((char *) &serv_addr,0, sizeof(serv_addr)); // sets bytes in memory to zero, 
+                                                      // initializes serv_addr to zeros
     serv_addr.sin_family = AF_INET; // always set to AF_INET
 
     // set IP address to serv_addr, use bcopy because server->h_addr is a character string
-    bcopy((char *)server->h_addr,  //h_addr = the first address in the array of network addresses
+    bcopy((char *)server->h_addr,  // h_addr = the first address in the array of network addresses
          (char *)&serv_addr.sin_addr.s_addr,  
          server->h_length);
     serv_addr.sin_port = htons(portno); // set port number of server, converted to network byte order
@@ -92,7 +94,8 @@ int main(int argc, char **argv) {
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
         error("ERROR connecting");
 
-    // do work here in infinite loop (desired for this example), but terminate if detect ROS has faulted (or ctl-C)
+    // do work here in infinite loop (desired for this example), 
+    // but terminate if detect ROS has faulted (or ctl-C)
     while (ros::ok()) 
     { 
         // publishing x = a*sin(omega * t)
@@ -123,7 +126,7 @@ int main(int argc, char **argv) {
              error("ERROR reading from socket");
         printf("%s\n",floatArray);*/
 
-        ros::Duration(0.1).sleep();
+        ros::Duration(1).sleep();
 
     }  
     // done with reading and writing to controller
